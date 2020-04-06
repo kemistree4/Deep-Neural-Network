@@ -1,5 +1,5 @@
 import numpy as np
-import mnist
+from keras.datasets import mnist
 import keras
 from keras.models import Sequential
 from keras.layers import Dense
@@ -18,6 +18,7 @@ test_images = (test_images / 255) - 0.5
 train_images = train_images.reshape((-1, 784))
 test_images = test_images.reshape((-1, 784))
 
+#Instantiating model and bulding 3 dense layers
 model = Sequential([
   Dense(64, activation='relu', input_shape=(784,)),
   Dense(64, activation='relu'),
