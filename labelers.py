@@ -39,7 +39,7 @@ print(random_df)
 
 # Code below used to test image input
 image = Image.open(random_df.loc[2438, 'full_path'])
-image.show()
+#image.show()
 # print(image.format)
 # print(image.size)
 # print(image.mode)
