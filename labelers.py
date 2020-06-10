@@ -9,7 +9,6 @@ Created on Sun May 10 19:22:39 2020
 import pandas as pd
 import os
 from PIL import Image
-#from keras_preprocessing.image import ImageDataGenerator
 from numpy import asarray
 from keras.models import Sequential
 from keras.layers import Conv2D
@@ -19,7 +18,7 @@ from keras.layers import Dense
 from keras.preprocessing.image import ImageDataGenerator
 import time
 
-def label_image_dir(datadir='/media/rikeem/SP PHD U31/Output frames'):
+def label_image_dir(datadir='/media/rikeem/SP PHD U32/Output frames'):
     flist = []
     
     for subdir in os.listdir(datadir):
@@ -35,7 +34,11 @@ def label_image_dir(datadir='/media/rikeem/SP PHD U31/Output frames'):
 df = label_image_dir()
 random_df = df.sample(len(df))
 
+new_df = label_image_dir(datadir='/media/rikeem/SP PHD U32/New_Test_Set')
+random_new_df = new_df.sample(len(new_df))
+
 print(random_df)
+print(random_new_df)
 
 # Code below used to test image input
 image = Image.open(random_df.loc[2438, 'full_path'])
@@ -77,7 +80,7 @@ cnn_clf.add(Flatten())
 h1 = Dense(units = 128, activation = 'relu')
 cnn_clf.add(h1)
 
-h2 = Dense(units = 3, activation = 'sigmoid')
+h2 = Dense(units = 4, activation = 'sigmoid')
 cnn_clf.add(h2)
 
 #Compile the CNN
@@ -91,51 +94,58 @@ cnn_clf.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['ac
 datagen = ImageDataGenerator(rescale=1./255.)
 test_datagen = ImageDataGenerator(rescale=1./255.)
 
-train_generator = datagen.flow_from_dataframe(random_df[:5280],
+train_generator = datagen.flow_from_dataframe(random_df[:6698],
                                               x_col='full_path',
                                               y_col='label',
                                               class_mode='categorical',
                                               batch_size=32,
-                                              classes=['Bull_Trout','No_Fish', 'Salmon'])
+                                              classes=['Bull_Trout','No_Fish', 'Kokanee', 'O_Mykiss'])
 
-valid_generator = test_datagen.flow_from_dataframe(random_df[5280:5590],
+valid_generator = test_datagen.flow_from_dataframe(random_df[6698:7087],
                                               x_col='full_path',
                                               y_col='label',
                                               class_mode='categorical',
                                               batch_size=32,
-                                              classes=['Bull_Trout','No_Fish', 'Salmon'])
+                                              classes=['Bull_Trout','No_Fish', 'Kokanee', 'O_Mykiss'])
 
-test_generator = test_datagen.flow_from_dataframe(random_df[5590:],
+test_generator = test_datagen.flow_from_dataframe(random_df[7087:],
                                               x_col='full_path',
                                               y_col='label',
                                               shuffle=False,
                                               batch_size=32,
                                               class_mode='categorical',
                                               #class_mode=None,
-                                              classes=['Bull_Trout','No_Fish', 'Salmon'])
+                                              classes=['Bull_Trout','No_Fish', 'Kokanee', 'O_Mykiss'])
+
+new_test_generator = test_datagen.flow_from_dataframe(random_new_df,
+                                              x_col='full_path',
+                                              y_col='label',
+                                              shuffle=False,
+                                              batch_size=32,
+                                              class_mode='categorical',
+                                              #class_mode=None,
+                                              classes=['Bull_Trout','No_Fish', 'Kokanee', 'O_Mykiss'])
 
 #Apply this all transformations to the training set but only the rescaling function to the test set
 #train_generator = ImageDataGenerator(rescale = 1./255, shear_range = 0.2, zoom_range = 0.2, horizontal_flip = True)
 #test_setgen = ImageDataGenerator(rescale = .1/255)
 
-training_data = train_generator 
-#train_setgen.flow_from_directory(r'C:\Users\Rikeem\Desktop\Datasets\animal_data\training_set', target_size = (64, 64), batch_size = 32, class_mode = 'binary')
-test_data = test_generator 
-#train_setgen.flow_from_directory(r'C:\Users\Rikeem\Desktop\Datasets\animal_data\test_set', target_size = (64, 64), batch_size = 32, class_mode = 'binary')
-#flow_from_directory = path of directory where images are stored
-
-#batch_size = batch size of images that you want to generate?
-#class_mode = binary because we have two classes as output, cat or dog
-
 #Find accuracy
-cnn_clf.fit_generator(training_data, steps_per_epoch = (8000/32), epochs = 5, validation_data = valid_generator, validation_steps = (2000/32))
+cnn_clf.fit_generator(train_generator, steps_per_epoch = (len(random_df)/32), epochs = 10, validation_data = valid_generator, validation_steps = (2000/32))
 
-print("Train Set Accuracy: " + str(cnn_clf.evaluate(training_data)))
+print("Train Set Accuracy: " + str(cnn_clf.evaluate(train_generator)))
 print("Validation Set Accuracy: " + str(cnn_clf.evaluate(valid_generator)))
-print("Test Set Accuracy: " + str(cnn_clf.evaluate(test_data)))
+print("Test Set Accuracy: " + str(cnn_clf.evaluate(test_generator)))
 
 t0 = time.time()
-predictions = cnn_clf.predict(test_data)
+predictions = cnn_clf.predict(test_generator)
 t1 = time.time()
 
-print("Predictions took " + str((t1-t0)/len(predictions)) + " seconds")
+print("Prediction took " + str((t1-t0)/len(predictions)) + " seconds")
+
+t2=time.time()
+predictions = cnn_clf.predict(new_test_generator)
+t3 = time.time()
+
+print("Second prediction took " + str((t3-t2)/len(predictions)) + " seconds")
+print("New Test Set Accuracy: " + str(cnn_clf.evaluate(new_test_generator)))
