@@ -18,7 +18,8 @@ from keras.layers import Dense
 from keras.preprocessing.image import ImageDataGenerator
 import time
 
-def label_image_dir(datadir='/media/rikeem/SP PHD U32/Output frames'):
+
+def label_image_dir(datadir='/media/kemistree4/SP PHD U3/Output frames'):
     flist = []
     
     for subdir in os.listdir(datadir):
@@ -34,7 +35,7 @@ def label_image_dir(datadir='/media/rikeem/SP PHD U32/Output frames'):
 df = label_image_dir()
 random_df = df.sample(len(df))
 
-new_df = label_image_dir(datadir='/media/rikeem/SP PHD U32/New_Test_Set')
+new_df = label_image_dir(datadir='/media/kemistree4/SP PHD U3/New_Test_Set')
 random_new_df = new_df.sample(len(new_df))
 
 print(random_df)
@@ -131,7 +132,7 @@ new_test_generator = test_datagen.flow_from_dataframe(random_new_df,
 #test_setgen = ImageDataGenerator(rescale = .1/255)
 
 #Find accuracy
-cnn_clf.fit_generator(train_generator, steps_per_epoch = (len(random_df)/32), epochs = 10, validation_data = valid_generator, validation_steps = (2000/32))
+cnn_clf.fit_generator(train_generator, steps_per_epoch = 100, epochs = 20, validation_data = valid_generator, validation_steps = (2000/32))
 
 print("Train Set Accuracy: " + str(cnn_clf.evaluate(train_generator)))
 print("Validation Set Accuracy: " + str(cnn_clf.evaluate(valid_generator)))
@@ -149,3 +150,4 @@ t3 = time.time()
 
 print("Second prediction took " + str((t3-t2)/len(predictions)) + " seconds")
 print("New Test Set Accuracy: " + str(cnn_clf.evaluate(new_test_generator)))
+ 

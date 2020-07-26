@@ -5,43 +5,66 @@
 @author: kemistree4
 """
 
-import tensorflow as tf
-from tensorflow.keras import datasets, layers, models
+from __future__ import print_function
+import keras
+from keras.datasets import cifar10
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Activation, Flatten
+from keras.layers import Conv2D, MaxPooling2D
+from keras.utils import print_summary, to_categorical
 
-# Dataset is 60000 images with 10 classes: airplane, automobile, bird, cat, deer, dog, frog, horse, ship, and truck.
-(train_images, train_labels), (test_images, test_labels) = datasets.cifar10.load_data()
+batch_size = 64
+num_classes = 10
+epochs = 100
+model_name = '/home/rikeem/Desktop/'
+save_dir = '/model/' + model_name
 
-# Normalize pixel values to be between 0 and 1
-train_images, test_images = train_images / 255.0, test_images / 255.0
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
-model = models.Sequential()
-model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(32, 32, 3)))
-model.add(layers.MaxPooling2D((2, 2)))
+y_train = to_categorical(y_train, num_classes)
+y_test = to_categorical(y_test, num_classes)
+
+x_train = x_train.astype('float32')
+x_test = x_test.astype('float32')
+x_train /= 255.0
+x_test /= 255.0
+
+model = Sequential()
+model.add(Conv2D(32, (3, 3), padding='same', input_shape=x_train.shape[1:]))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.3))
+
+model.add(Conv2D(64, (3, 3), padding='same', input_shape=x_train.shape[1:]))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.3))
+
+model.add(Conv2D(128, (3, 3), padding='same', input_shape=x_train.shape[1:]))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.4))
+
+model.add(Flatten())
+model.add(Dense(80))
+model.add(Activation('relu'))
+model.add(Dropout(0.3))
+model.add(Dense(num_classes))
+model.add(Activation('softmax'))
 
 
-model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Dropout(0.4))
-
-model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-model.add(layers.MaxPooling2D((2, 2)))
-model.add(layers.Dropout(0.4))
-
-model.add(layers.Flatten())
-model.add(layers.Dense(64, activation='relu'))
-model.add(layers.Dropout(0.4))
-model.add(layers.Dense(10))
-
-model.compile(optimizer='adam',
-              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+model.compile(loss='categorical_crossentropy',
+              optimizer='adam',
               metrics=['accuracy'])
 
-history = model.fit(train_images, train_labels, epochs=40, 
-                    validation_data=(test_images, test_labels))
+model.fit(x_train, y_train,
+          batch_size=batch_size,
+          epochs=epochs,
+          validation_split=0.2,
+          shuffle=True)
 
-# Final evaluation of the model
+scores = model.evaluate(x_test, y_test, verbose=1)
+print('Test loss:', scores[0])
+print('Test accuracy:', scores[1])
 
-print("Train Set Accuracy: " + str(model.evaluate(train_images, train_labels)[1]*100))
-print("Test Set Accuracy: " + str(model.evaluate(test_images, test_labels)[1]*100))
+model.save(save_dir + '.h5')
